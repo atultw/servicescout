@@ -1,0 +1,20 @@
+## ServiceScout
+Author: Theo Weise
+
+## Architecture
+* backend
+    * scout_agent
+        * agent.py -> agent runnable with `adk web`
+        * a2a.py -> a2a server
+        * main.py -> http server for custom setup
+    * phone_agent
+        * main.py -> http server for custom setup
+* frontend -> NextJS frontend to interact with ServiceScout
+
+## ADK Support
+* Run `adk web` from the `backend` directory for a playground 
+
+## Custom UI
+ServiceScout is best enjoyed through the custom NextJS dashboard.
+
+* In `frontend`, run `npm run dev`
