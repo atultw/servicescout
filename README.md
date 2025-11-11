@@ -1,6 +1,8 @@
 ## ServiceScout
 Author: Theo Weise
 
+Try it at chatbookings.net
+
 ## Architecture
 * backend
     * scout_agent
