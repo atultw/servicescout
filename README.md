@@ -18,3 +18,4 @@ Author: Theo Weise
 ServiceScout is best enjoyed through the custom NextJS dashboard.
 
 * In `frontend`, run `npm run dev`
+<img width="1506" height="762" alt="Screenshot 2025-11-10 at 7 55 44 PM" src="https://github.com/user-attachments/assets/5d746c74-8b9a-4c37-bdae-bd4fac64447e" />
