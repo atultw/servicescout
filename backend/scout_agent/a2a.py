@@ -1,7 +1,7 @@
-from google.adk.a2a.utils.agent_to_a2a import to_a2a
-from scout_agent.agent import root_agent
+from agent import root_agent
 import uvicorn
 import os
+from google.adk.a2a.utils.agent_to_a2a import to_a2a
 
 a2a_app = to_a2a(root_agent)
 

@@ -24,10 +24,10 @@ const config: Config = {
         "bg-tertiary": "#F5F6F8",
         "text-light": "#1A1D21",
         "text-muted": "#6B7280", 
-        "accent-blue": "#60A5FA", // Changed from blue-600 to blue-400
-        "accent-blue-dark": "#3B82F6", // Changed from custom dark to blue-500
-        "accent-blue-light": "#93C5FD", // Changed from blue-400 to blue-300
-        "accent-blue-lighter": "#DBEAFE", // Changed from blue-50 to blue-100
+  "accent-blue": "#2563eb", // Tailwind blue-600
+  "accent-blue-dark": "#1d4ed8", // Tailwind blue-700
+  "accent-blue-light": "#60a5fa", // Tailwind blue-400
+  "accent-blue-lighter": "#dbeafe", // Tailwind blue-100
         "accent-orange": "#F59E0B",
         "status-green": "#059669",
         "status-red": "#DC2626",

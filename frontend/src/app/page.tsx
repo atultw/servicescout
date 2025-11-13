@@ -1,8 +1,12 @@
 "use client";
 
+// const wsHost = "backend-581277715925.us-central1.run.app";
+// const backendUrl = "https://chatbookings.net";
+
+const wsHost = "localhost:8000";
+const backendUrl = "http://localhost:8000";
+
 import { useState, useEffect, useRef, useCallback } from "react";
-// Use environment variable for backend URL
-const backendUrl = "https://nlpconnector.web.app";
 import { auth } from "./firebase";
 import { RecaptchaVerifier, User } from "firebase/auth";
 import Sidebar from "@/components/Sidebar";
@@ -57,6 +61,8 @@ export default function Home() {
 
   // Text input state
   const [message, setMessage] = useState("");
+  // Only show results from database checkbox state
+  const [onlyDbResults, setOnlyDbResults] = useState(false); // default to off
 
   // Voice chat states
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
@@ -68,6 +74,17 @@ export default function Home() {
 
   // Voice chat refs
   const wsRef = useRef<WebSocket | null>(null);
+
+  // Handler for toggling onlyDbResults and sending websocket message
+  const handleToggleOnlyDbResults = useCallback((checked: boolean) => {
+    setOnlyDbResults(checked);
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'system',
+        action: checked ? 'only_db_results_on' : 'only_db_results_off'
+      }));
+    }
+  }, []);
 
   // Function to finalize the live message into conversation history
   const finalizeLiveMessage = useCallback(() => {
@@ -315,7 +332,6 @@ export default function Home() {
     try {
       const token = await user.getIdToken();
       const wsProtocol = backendUrl.startsWith('https') ? 'wss' : 'ws';
-      const wsHost = "backend-581277715925.us-central1.run.app";
       const ws = new WebSocket(`${wsProtocol}://${wsHost}/api/ws/${activeSessionId}`);
 
       ws.onopen = () => {
@@ -702,10 +718,11 @@ export default function Home() {
 
   useEffect(() => {
     // When session changes, clear candidates and selected call from the previous session
-    setCandidates([]);
-    setSelectedCall(null);
-    setLiveMessage(null);
-    setMessage("");
+  setCandidates([]);
+  setSelectedCall(null);
+  setLiveMessage(null);
+  setMessage("");
+  setOnlyDbResults(false); // reset to off when session changes
     // Disconnect chat if connected to a different session
     if (isVoiceConnected) {
       disconnectChat();
@@ -713,6 +730,8 @@ export default function Home() {
     // Load conversation history for the new session
     if (activeSessionId) {
       // fetchSessionConversation(activeSessionId);
+      // Automatically connect to websocket when session is opened
+      connectChat();
     }
   }, [activeSessionId, fetchSessionConversation]);
 
@@ -787,9 +806,9 @@ export default function Home() {
   const selectedCallObject = calls.find(c => c.call_id === selectedCall?.call_id) || null;
 
   return (
-    <div className="flex h-screen bg-bg-primary text-text-light">
-      {/* Compact Sidebar */}
-      <div className="w-80 flex-shrink-0 border-r border-border bg-bg-secondary shadow-lg">
+    <div className="flex h-screen bg-blue-50 text-gray-800 p-2">
+      {/* Sidebar */}
+      <div className="w-80 flex-shrink-0 bg-white p-3 border-r border-gray-200 rounded-2xl shadow-xl flex flex-col">
         <Sidebar
           user={user}
           sessions={sessions}
@@ -800,35 +819,33 @@ export default function Home() {
       </div>
 
       {/* Main Content - Chat Centered */}
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div className="flex-1 w-full flex flex-col min-h-0">
-          <ChatArea
-            activeSession={activeSession}
-            candidates={candidates}
-            message={message}
-            setMessage={setMessage}
-            handleSendMessage={handleSendMessage}
-            isVoiceConnected={isVoiceConnected}
-            isVoiceStreaming={isVoiceStreaming}
-            voiceStatus={voiceStatus}
-            liveMessage={liveMessage}
-            connectVoiceChat={connectChat}
-            disconnectVoiceChat={disconnectChat}
-            toggleVoiceStreaming={toggleVoiceStreaming}
-          />
-        </div>
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0 p-3">
+        <ChatArea
+          activeSession={activeSession}
+          candidates={candidates}
+          message={message}
+          setMessage={setMessage}
+          handleSendMessage={handleSendMessage}
+          isVoiceConnected={isVoiceConnected}
+          isVoiceStreaming={isVoiceStreaming}
+          voiceStatus={voiceStatus}
+          liveMessage={liveMessage}
+          connectVoiceChat={connectChat}
+          disconnectVoiceChat={disconnectChat}
+          toggleVoiceStreaming={toggleVoiceStreaming}
+          onlyDbResults={onlyDbResults}
+          handleToggleOnlyDbResults={handleToggleOnlyDbResults}
+        />
       </main>
 
       {/* Right Panel - Calls & Details */}
-      <div className="w-96 flex-shrink-0 border-l border-border bg-bg-secondary shadow-lg">
-        <div className="h-full flex flex-col">
-          <CallsPanel calls={calls} handleSelectCall={handleSelectCall} selectedCall={selectedCallObject} />
-          {selectedCall && (
-            <div className="border-t border-border">
-              <CallDetailsPanel selectedCall={selectedCall} setSelectedCall={setSelectedCall} />
-            </div>
-          )}
-        </div>
+  <div className="w-96 flex-shrink-0 bg-white p-3 border-l border-gray-200 rounded-2xl shadow-xl flex flex-col">
+        <CallsPanel calls={calls} handleSelectCall={handleSelectCall} selectedCall={selectedCallObject} />
+        {selectedCall && (
+          <div className="border-t border-gray-200 mt-4 pt-4">
+            <CallDetailsPanel selectedCall={selectedCall} setSelectedCall={setSelectedCall} />
+          </div>
+        )}
       </div>
     </div>
   );

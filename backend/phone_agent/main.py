@@ -330,17 +330,17 @@ async def websocket_endpoint(websocket: WebSocket, call_id: str):
 @app.post("/dialer/initiate_call")
 async def initiate_call(initiator_user_id: str, phone_number: str, outcome: str, biz_name: str, biz_description: Optional[str] = None, lat: Optional[float] = None, lng: Optional[float] = None, session_id: Optional[str] = None, user_context: str = ""):
     """Initiates a call to the given phone number."""
-    server_url = os.environ.get("SERVER_URL")
+    server_url = os.environ.get("PHONE_AGENT_SERVER_HOST")
     if not server_url:
-        raise ValueError("SERVER_URL environment variable not set.")
-        
+        raise ValueError("PHONE_AGENT_SERVER_HOST environment variable not set.")
+
     client = Client(os.environ["TWILIO_ACCOUNT_SID"], os.environ["TWILIO_AUTH_TOKEN"])
     
     call_id = str(uuid.uuid4())
 
     response = VoiceResponse()
     connect = Connect()
-    connect.stream(url=f"wss://{server_url}/ws/{call_id}") 
+    connect.stream(url=f"wss://{server_url}/dialer/ws/{call_id}") 
     response.append(connect)
     response.pause(length=30) # Keep the call alive for a bit
 

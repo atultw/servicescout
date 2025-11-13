@@ -14,7 +14,29 @@ Author: Theo Weise
 ## ADK Support
 * Run `adk web` from the `backend` directory for a playground 
 
-## Custom UI
-ServiceScout is best enjoyed through the custom NextJS dashboard.
+## Run Locally
+1. Rename `.env.example` to `.env` in both `backend/phone_agent` and `backend/scout_agent`
+2. Fill in your twilio credentials in both .env files
+3. Fill in GOOGLE_MAPS_API_KEY in both .env files
+4. In Firebase, go to auth and get a `firebase.ts` file to put in frontend/src/app. 
+5. Switch the commented lines at the top of `frontend/src/app/page.tsx` if needed. 
 
-* In `frontend`, run `npm run dev`
+6. Create and activate a python virtualenv. You only need one.
+7. Run `./setup.sh` and follow the instructions.
+
+8. Run these commands in separate terminals:
+```
+cd backend/scout_agent && python3 main.py
+cd backend/phone_agent && python3 main.py
+cd backend/scout_agent && python3 a2a.py
+cd frontend && npm run dev
+```
+
+The following services will run:
+3000: NextJS Frontend
+8000: scout_agent HTTP API
+8001: phone_agent HTTP API
+8002: A2A server
+
+## Custom UI
+ServiceScout is best enjoyed through the custom NextJS dashboard. You can try it at `http://localhost:3000` if you followed the above steps, or at `https://chatbookings.net`.

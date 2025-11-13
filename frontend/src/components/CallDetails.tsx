@@ -11,28 +11,28 @@ interface CallDetailsProps {
 
 export default function CallDetailsPanel({ selectedCall, setSelectedCall }: CallDetailsProps) {
     return (
-        <div className="bg-bg-secondary p-4 flex flex-col border-t border-border flex-1 min-h-0">
-            <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                <h2 className="text-xl font-semibold text-text-light">Call Details</h2>
-                <button onClick={() => setSelectedCall(null)} className="text-text-muted hover:text-text-light">
+    <div className="bg-white rounded-2xl shadow-xl px-3 py-2 flex flex-col flex-1 min-h-0">
+            <div className="flex justify-between items-center mb-2 flex-shrink-0">
+                <h2 className="text-2xl font-bold text-gray-800">Call Details</h2>
+                <button onClick={() => setSelectedCall(null)} className="text-gray-400 hover:text-gray-700">
                     <X className="h-6 w-6" />
                 </button>
             </div>
-            <div className="overflow-y-auto overflow-x-hidden space-y-4 -mr-2 pr-2">
+            <div className="overflow-y-auto overflow-x-hidden space-y-6 pr-2">
                 <div>
-                    <h3 className="font-semibold text-text-light break-words">{selectedCall.biz_name}</h3>
-                    <p className="text-sm text-text-muted">{selectedCall.phone_number}</p>
+                    <h3 className="font-semibold text-gray-700 break-words text-lg mb-1">{selectedCall.biz_name}</h3>
+                    <p className="text-sm text-gray-500 mb-2">{selectedCall.phone_number}</p>
                 </div>
-                <div className="border-t border-border pt-4">
-                    <h4 className="font-semibold text-text-light mb-2 px-4">Transcript</h4>
-                    <div className="space-y-3 text-sm px-4">
+                <div className="pt-6">
+                    <h4 className="font-semibold text-gray-700 mb-4 px-2">Transcript</h4>
+                    <div className="space-y-4 text-sm px-2">
                         {selectedCall.transcript?.map((entry, index) => (
-                            <div key={index} className={`flex items-end gap-2 ${entry.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                {entry.role !== 'user' && <div className="p-1.5 bg-accent-blue rounded-full border border-border shadow-sm"><BotIcon className="h-4 w-4 text-white" /></div>}
-                                <div className={`p-3 rounded-lg max-w-xs shadow-sm ${entry.role === 'user' ? 'bg-accent-blue text-white rounded-br-none' : 'bg-bg-tertiary text-text-light rounded-bl-none'}`}>
+                            <div key={index} className={`flex items-end gap-3 ${entry.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                {entry.role !== 'user' && <div className="p-2 bg-blue-500 rounded-full border border-gray-200 shadow-sm"><BotIcon className="h-4 w-4 text-white" /></div>}
+                                <div className={`p-4 rounded-xl max-w-xs shadow-sm ${entry.role === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-blue-50 text-gray-700 rounded-bl-none'}`}>
                                     <p className="break-words">{entry.text}</p>
                                 </div>
-                                {entry.role === 'user' && <div className="p-1.5 bg-bg-tertiary rounded-full border border-border shadow-sm"><UserIcon className="h-4 w-4 text-text-light" /></div>}
+                                {entry.role === 'user' && <div className="p-2 bg-blue-50 rounded-full border border-gray-200 shadow-sm"><UserIcon className="h-4 w-4 text-gray-700" /></div>}
                             </div>
                         ))}
                     </div>

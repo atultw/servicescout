@@ -21,6 +21,8 @@ interface ChatAreaProps {
     connectVoiceChat: () => void;
     disconnectVoiceChat: () => void;
     toggleVoiceStreaming: () => void;
+    onlyDbResults: boolean;
+    handleToggleOnlyDbResults: (checked: boolean) => void;
 }
 
 export default function ChatArea({ 
@@ -35,8 +37,10 @@ export default function ChatArea({
     liveMessage,
     connectVoiceChat,
     disconnectVoiceChat,
-    toggleVoiceStreaming
-}: ChatAreaProps) {
+    toggleVoiceStreaming,
+    onlyDbResults,
+    handleToggleOnlyDbResults
+    }: ChatAreaProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -85,33 +89,36 @@ export default function ChatArea({
     const hasConversation = activeSession.history.length > 0;
     const showEmptyState = !hasConversation;
 
+    // Example static message for user
+    const exampleMessage = "Try: 'Can you get me quotes for hardwood installation?'";
+
     return (
-        <div className="flex-1 flex flex-col bg-bg-primary overflow-hidden min-h-0">
+    <div className="flex-1 flex flex-col bg-white overflow-hidden min-h-0 rounded-2xl shadow-xl px-4 py-4">
             {/* Modern Header */}
-            <header className="py-4 px-4 bg-bg-secondary border-b border-border shadow-sm flex-shrink-0">
+            <header className="py-2 px-0 border-b border-gray-200 flex-shrink-0 mb-4">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-blue-400 p-2 rounded-lg">
-                            <BotIcon className="h-6 w-6 text-white" />
+                    <div className="flex items-center gap-4">
+                        <div className="bg-blue-500 p-3 rounded-lg">
+                            <BotIcon className="h-7 w-7 text-white" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-text-light">
+                            <h2 className="text-2xl font-bold text-gray-800">
                                 {activeSession.name}
                             </h2>
                             {activeSession.description && (
-                                <p className="text-sm text-text-muted mt-1">{activeSession.description}</p>
+                                <p className="text-base text-gray-500 mt-1">{activeSession.description}</p>
                             )}
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
+                    <div className="flex items-center gap-4">
+                        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
                             isVoiceConnected 
-                                ? (isVoiceStreaming ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-accent-blue-lighter text-accent-blue-dark border border-accent-blue-light')
+                                ? (isVoiceStreaming ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-blue-100 text-blue-700 border border-blue-200')
                                 : 'bg-gray-50 text-gray-600 border border-gray-200'
                         }`}>
                             <div className={`w-2 h-2 rounded-full ${
                                 isVoiceConnected 
-                                    ? (isVoiceStreaming ? 'bg-green-500 animate-pulse' : 'bg-accent-blue')
+                                    ? (isVoiceStreaming ? 'bg-green-500 animate-pulse' : 'bg-blue-500')
                                     : 'bg-gray-400'
                             }`}></div>
                             {voiceStatus}
@@ -119,22 +126,24 @@ export default function ChatArea({
                     </div>
                 </div>
             </header>
-            
+
             {/* Suggested Businesses */}
             {candidates && candidates.length > 0 && (
                 <SuggestedBusinesses candidates={candidates} />
             )}
-            
+
             {/* Messages Area - Scrollable Container */}
             <div 
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto bg-bg-primary scroll-smooth chat-scroll overflow-x-hidden" 
-                style={{ 
-                    minHeight: 0
-                }}
+                className="flex-1 overflow-y-auto scroll-smooth chat-scroll overflow-x-hidden" 
+                style={{ minHeight: 0 }}
             >
                 <div className="h-full flex flex-col">
-                    <div className="w-full px-4 py-3 space-y-4 flex-1 flex flex-col">
+                    <div className="w-full px-0 py-0 space-y-4 flex-1 flex flex-col">
+                        {/* Static example message above bubbles */}
+                        <div className="w-full flex items-center justify-center mb-2">
+                            <span className="text-gray-400 text-base font-medium text-center">{exampleMessage}</span>
+                        </div>
                         {showEmptyState ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-center">
                                 <div className="max-w-xl">
@@ -157,8 +166,8 @@ export default function ChatArea({
                                                 <div className="bg-blue-400 text-white p-4 rounded-2xl max-w-lg shadow-lg break-words word-wrap">
                                                     <p className="leading-relaxed whitespace-pre-wrap">{chat.user}</p>
                                                 </div>
-                                                <div className="bg-accent-blue-lighter p-3 rounded-full border border-accent-blue-light shadow-sm flex-shrink-0">
-                                                    <UserIcon className="h-6 w-6 text-accent-blue-dark" />
+                                                <div className="bg-blue-100 p-3 rounded-full border border-blue-200 shadow-sm flex-shrink-0">
+                                                    <UserIcon className="h-6 w-6 text-blue-700" />
                                                 </div>
                                             </div>
                                         )}
@@ -167,14 +176,13 @@ export default function ChatArea({
                                                 <div className="bg-blue-500 p-3 rounded-full shadow-sm flex-shrink-0">
                                                     <BotIcon className="h-6 w-6 text-white" />
                                                 </div>
-                                                <div className="bg-bg-secondary border border-border text-text-light p-4 rounded-2xl max-w-lg shadow-lg prose prose-gray prose-sm break-words word-wrap">
+                                                <div className="bg-blue-50 border border-blue-200 text-gray-700 p-4 rounded-2xl max-w-lg shadow-lg prose prose-gray prose-sm break-words word-wrap">
                                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{chat.agent}</ReactMarkdown>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
                                 ))}
-                                
                                 {/* Live Message */}
                                 {liveMessage && liveMessage.text.trim() && (
                                     <div className={`flex items-start gap-4 ${liveMessage.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -185,29 +193,28 @@ export default function ChatArea({
                                         )}
                                         <div className={`p-4 rounded-2xl max-w-lg shadow-lg border-2 border-dashed break-words word-wrap ${
                                             liveMessage.role === 'user' 
-                                                ? 'bg-accent-blue-lighter text-accent-blue-dark border-accent-blue-light' 
+                                                ? 'bg-blue-100 text-blue-700 border-blue-200' 
                                                 : 'bg-gray-50 text-gray-700 border-gray-300'
                                         }`}>
                                             <p className="italic leading-relaxed whitespace-pre-wrap">{liveMessage.text}...</p>
                                         </div>
                                         {liveMessage.role === 'user' && (
-                                            <div className="bg-accent-blue-lighter p-3 rounded-full border border-accent-blue-light shadow-sm flex-shrink-0">
-                                                <UserIcon className="h-6 w-6 text-accent-blue-dark" />
+                                            <div className="bg-blue-100 p-3 rounded-full border border-blue-200 shadow-sm flex-shrink-0">
+                                                <UserIcon className="h-6 w-6 text-blue-700" />
                                             </div>
                                         )}
                                     </div>
                                 )}
                             </div>
                         )}
-                        
                         {/* Scroll anchor */}
                         <div ref={messagesEndRef} className="h-1 flex-shrink-0" />
                     </div>
                 </div>
             </div>
-            
+
             {/* Modern Input Area */}
-            <div className="bg-bg-secondary border-t border-border flex-shrink-0 px-4 py-3">
+            <div className="border-t border-gray-200 flex-shrink-0 px-0 pt-4 mt-4">
                 <div className="w-full">
                     {/* Text Input with Voice Controls */}
                     <div className="flex items-center gap-4">
@@ -225,15 +232,15 @@ export default function ChatArea({
                                     }
                                 }}
                                 placeholder="Ask me anything about services you need..."
-                                className="w-full pl-6 pr-16 py-3 bg-bg-primary border-2 border-border rounded-2xl focus:outline-none focus:border-accent-blue focus:ring-4 focus:ring-accent-blue/10 text-text-light transition-all resize-none shadow-lg"
+                                className="w-full pl-6 pr-16 py-4 bg-blue-50 border-2 border-blue-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-200/10 text-gray-800 transition-all resize-none shadow-lg scrollbar-hide"
                                 rows={1}
-                                style={{ lineHeight: '1.5rem', minHeight: '3rem', maxHeight: '200px' }}
+                                style={{ lineHeight: '1.5rem', minHeight: '3rem', height: '3.5rem', maxHeight: '3.5rem', overflow: 'hidden' }}
                             />
                             <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
                                 <button
                                     onClick={handleSendMessage}
                                     disabled={!message.trim()}
-                                    className="p-2 bg-blue-400 hover:bg-blue-500 rounded-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                                    className="p-3 bg-blue-500 hover:bg-blue-600 rounded-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
                                 >
                                     <Send className="h-5 w-5 text-white" />
                                 </button>
@@ -249,7 +256,7 @@ export default function ChatArea({
                                         ? 'bg-red-500 hover:bg-red-600 hover:scale-110 animate-pulse'
                                         : isVoiceConnected
                                             ? 'bg-green-500 hover:bg-green-600 hover:scale-110'
-                                            : 'bg-blue-400 hover:bg-blue-500 hover:scale-110'
+                                            : 'bg-blue-500 hover:bg-blue-600 hover:scale-110'
                                 }`}
                             >
                                 {isVoiceConnected ? (
@@ -257,13 +264,25 @@ export default function ChatArea({
                                 ) : (
                                     <Mic size={20} className="text-white" />
                                 )}
-                                
                                 {/* Ripple effect for active recording */}
                                 {isVoiceConnected && isVoiceStreaming && (
                                     <div className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-30"></div>
                                 )}
                             </button>
                         </div>
+                    </div>
+                    {/* Only DB Results Checkbox */}
+                    <div className="flex items-center mt-4">
+                        <input
+                            type="checkbox"
+                            id="only-db-results"
+                            checked={onlyDbResults}
+                            onChange={e => handleToggleOnlyDbResults(e.target.checked)}
+                            className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor="only-db-results" className="text-sm text-gray-700 select-none cursor-pointer">
+                            Only show results from database
+                        </label>
                     </div>
                 </div>
             </div>

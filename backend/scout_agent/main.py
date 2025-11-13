@@ -1,3 +1,4 @@
+import time
 from fastapi import Depends, FastAPI, HTTPException, status, WebSocket, WebSocketDisconnect
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +22,7 @@ from google.adk.agents import LiveRequestQueue
 from google.adk.runners import Runner
 from google.adk.agents.run_config import RunConfig
 from google.adk.sessions import InMemorySessionService
-from google.adk.events import Event
+from google.adk.events import Event, EventActions
 # ADK Model & Type Imports
 from google.genai import types
 from google.cloud import firestore
@@ -52,7 +53,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000"), "http://localhost:3000", "http://localhost:3001"],
+    allow_origins=["https://chatbookings.net", "http://127.0.0.1:3000", "http://localhost:3000", "http://localhost:3001"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -71,19 +72,13 @@ async def startup_event():
         print("\n❌ Root agent is not defined. Cannot initialize for FastAPI.")
         return
     session_service = InMemorySessionService()
-
-    # session_service =  VertexAiSessionService(
-    #     os.environ.get("GOOGLE_CLOUD_PROJECT"),
-    #     os.environ.get("GOOGLE_CLOUD_LOCATION"),
-    #     os.environ.get("VERTEX_AGENT_ENGINE_ID")
-    # )
     
     runner = Runner(
         agent=root_agent,
         app_name=APP_NAME,
         session_service=session_service
     )
-    print("✅ Agent Runner and Vertex AI Session Service initialized for FastAPI.")
+    print("✅ Agent Runner initialized for FastAPI.")
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
@@ -116,12 +111,13 @@ async def start_voice_agent_session(user_id: str, session_id: str, is_audio=True
     except:
         print(f"Session {session_id} not found for user {user_id}, creating new session.")
         # If session doesn't exist, create it
-        await session_service.create_session(
+        session = await session_service.create_session(
             app_name=APP_NAME,
             user_id=user_id,
             session_id=session_id,
             state={}
         )
+    
     
     modality = "AUDIO" if is_audio else "TEXT"
     run_config = RunConfig(
@@ -137,6 +133,7 @@ async def start_voice_agent_session(user_id: str, session_id: str, is_audio=True
         live_request_queue=live_request_queue,
         run_config=run_config,
     )
+
     return live_events, live_request_queue
 
 async def agent_to_client_messaging(websocket: WebSocket, live_request_queue: LiveRequestQueue, live_events: AsyncGenerator[Event, None], session_id: str, user_id: str):
@@ -150,7 +147,8 @@ async def agent_to_client_messaging(websocket: WebSocket, live_request_queue: Li
                 if isinstance(r.response.get('result'), CallPlacedResult):
                     placed_call_id = r.response.get('result').call_id
                 if placed_call_id:
-                    # IN BACKGROUND, POLL FIRESTORE TO CHECK FOR CALL OUTCOME UPDATES
+                    print("starting result listener")
+                                            # IN BACKGROUND, POLL FIRESTORE TO CHECK FOR CALL OUTCOME UPDATES
                     async def poll_call_outcome():
                         while True:
                             await asyncio.sleep(5)  # Poll every 5 seconds
@@ -174,7 +172,7 @@ async def agent_to_client_messaging(websocket: WebSocket, live_request_queue: Li
                                     live_request_queue.send_content(content=types.Content(
                                         role="user",
                                         parts=[types.Part.from_text(
-                                            text=f"Call completed. Data: {json.dumps(call_data_processed)}. Tell the user about the outcome. If You absolutely need more information from the user, you may ask. Keep user engagement to a minimum and think autonomously. Act autonomously using tools to continue achieving the user's goal, placing further calls liberally. Always use the tools available such as initiate_outcall. "
+                                            text=f"Call completed. Data: {json.dumps(call_data_processed)}. Tell the user about the outcome. If You absolutely need more information from the user, you may ask. Keep user engagement to a minimum and think autonomously. Act autonomously using tools to continue achieving the user's goal, placing further calls if needed. Always use the tools available such as initiate_outcall. Just don't place duplicate calls. "
                                         )]
                                     ))
                                     break
@@ -282,15 +280,29 @@ async def client_to_agent_messaging(websocket: WebSocket, live_request_queue: Li
             message_json = await websocket.receive_text()
             message = json.loads(message_json)
 
+            # Handle frontend system messages for only_db_results toggle
+            if message.get("type") == "system":
+                action = message.get("action")
+                if action == "only_db_results_on":
+                    # Send a system message to ADK session
+                    system_text = "System: only_db_results: Only show results from the database using firestore_retrieval_tool. Do not use the phone unless asked explicitly."
+                    print(f"Received only_db_results_on, sending system message to ADK: {system_text}")
+                    content = types.Content(role="user", parts=[types.Part.from_text(text=system_text)])
+                    live_request_queue.send_content(content=content)
+                elif action == "only_db_results_off":
+                    system_text = "System: You may ignore previous instructions about only_db_results and use all tools normally."
+                    print(f"Received only_db_results_off, sending system message to ADK: {system_text}")
+                    content = types.Content(role="user", parts=[types.Part.from_text(text=system_text)])
+                    live_request_queue.send_content(content=content)
+                continue
+
             if message["type"] == "start":
                 print(f"Starting voice conversation for session: {session_id}")
-                live_request_queue.send_content(content=types.Content(role="user", parts=[types.Part.from_text(text="You are the user's personal concierge assistant. You have just been called by the user and should begin with the greeting asking the user what you can do for them today. ")]))
-
+                live_request_queue.send_content(content=types.Content(role="user", parts=[types.Part.from_text(text="You are the user's personal assistant. You have just been called by the user and should begin with the greeting asking the user what you can do for them today. ")]))
             elif message["type"] == "audio":
                 # Receive audio data from client
                 audio_data_b64 = message["data"]
                 decoded_data = base64.b64decode(audio_data_b64)
-                
                 # Frontend sends 16-bit PCM data at 16kHz
                 # Gemini expects 16-bit linear PCM at 16kHz
                 live_request_queue.send_realtime(types.Blob(data=decoded_data, mime_type="audio/l16;rate=16000"))
@@ -303,7 +315,7 @@ async def client_to_agent_messaging(websocket: WebSocket, live_request_queue: Li
 
             elif message["type"] == "end":
                 print(f"Client ended voice conversation for session: {session_id}")
-                live_request_queue.send_content(content=types.Content(role="user", parts=[types.Part.from_text(text="Thank you for using ServiceScout! Have a great day.")]))
+                live_request_queue.send_content(content=types.Content(role="user", parts=[types.Part.from_text(text="Thank you for using ServiceScout! Have a great day." )]))
                 return
 
     except WebSocketDisconnect:
@@ -369,6 +381,7 @@ async def get_sessions(current_user: Annotated[dict, Depends(get_current_user)])
     """
     Retrieves all sessions for the current user.
     """
+    print(current_user)
     user_id = current_user["phone_number"]
     sessions_ref = db.collection("sessions").where("user_id", "==", user_id).order_by("createdAt", direction=firestore.Query.DESCENDING).get()
 
