@@ -4,6 +4,8 @@ Author: Theo Weise
 ## Try it at [chatbookings.net](https://chatbookings.net)
 ### Important Note: Currently, all calls are redirected to your signed-in phone number for proof of concept. When you pick up the phone, speak as the business owner.
 
+Demo: https://www.youtube.com/watch?v=WQnK7wCGM_Y 
+
 ## Overview
 ServiceScout places calls to businesses on your behalf. You can ask it to get you quotes, make appointments, and more. 
 
