@@ -53,3 +53,6 @@ The following services will run:
 
 ## Custom UI
 ServiceScout is best enjoyed through the custom NextJS dashboard. You can try it at `http://localhost:3000` if you followed the above steps, or at `https://chatbookings.net`.
+
+## Notes
+InMemorySessionService is used because VertexAISessionService caused extreme latency in the live audio chat. InMemorySessionService comes with the tradeoff that sessions are not persisted when the Cloud Run container exits. It is straightforward to replace the session service in the agent's main.py.
